@@ -30,8 +30,10 @@ void Feasible::GridInitialize(){
 
 void Feasible::MoveOrder(){
     /* M = (0, gy1) on plan, =(0,0) on grid*/
-    //BFSdist(Dist_Grid,0,gy1); /* working_SA, working_SA3*/
-    BFSdist(Dist_Grid,grid_x-1,0); /* working_SA2, some instances have better result */
+    if(Objective=="MAX")
+        BFSdist(Dist_Grid,grid_x-1,0); /* working_SA2, some instances have better result */
+    else
+        BFSdist(Dist_Grid,0,gy1); /* working_SA, working_SA3*/
     priority_queue<Dist,vector<Dist*>,dist_compare> mv_order;
 
     /* order for S->M*/
@@ -584,7 +586,8 @@ void Feasible::FindClosestU(){
         for(int s=0;s<U.size();s++){
             if(F[s]==1){
                 int len = abs(start_x[i]-U[s].first)+abs(start_y[i]-U[s].second); //SA2
-                //len += abs(target_x[i]-U[s].first)+abs(target_y[i]-U[s].second); // len = d(s,m)+d(m,t)
+                if(Objective=="SUM")
+                    len += abs(target_x[i]-U[s].first)+abs(target_y[i]-U[s].second); // len = d(s,m)+d(m,t) //SA3
                 if(len < shortest and F[s]==true or shortest == -1){
                     shortest = len;
                     sh = s;
@@ -821,9 +824,9 @@ void Feasible::WriteFile(){                // ANTOINE: write using the 3D Grid
     //ofstream solution(Objective+"_solution_"+output+"_"+to_string(Achieved_sum)+"_"+to_string(Achieved_ms)+".json");
     string filename;
     if(Objective=="MAX")
-        filename = Objective+"_"+to_string(Achieved_ms)+".json";
+        filename = Objective+to_string(Achieved_ms)+".json";
     else if(Objective=="SUM")
-        filename = Objective+"_"+to_string(Achieved_sum)+".json";
+        filename = Objective+to_string(Achieved_sum)+".json";
 
     ofstream solution(filename);
 
@@ -881,7 +884,13 @@ void Feasible::WriteFile(){                // ANTOINE: write using the 3D Grid
 }
 
 void Feasible::WriteVisual(){            // ANTOINE: Write with simultaneous movement
-    ofstream result("./visual_main_/main_"+output+"_"+to_string(Achieved_sum)+"_"+to_string(Achieved_ms)+".js");
+    string filename;
+    if(Objective=="MAX")
+        filename = "visual_MAX"+to_string(Achieved_ms);
+    else
+        filename = "visual_SUM"+to_string(Achieved_sum);
+
+    ofstream result(filename+".js");
     result << "var start = [\n";
     int i=0;
     for(;i<num_rb-1;i++){
@@ -965,7 +974,7 @@ void Feasible::WriteScore(){
     struct tm curr_tm;
     time_t curr_time = time(nullptr);
     localtime_r(&curr_time, &curr_tm);
-    ofstream score("./score_/score_"+output+".txt", ios::app);
+    ofstream score("score.txt", ios::app);
     score <<starttime<<endl;
     score <<" "<< elapse_t<<endl;
     score <<" "<<curr_tm.tm_mday<<"/"<<curr_tm.tm_mon+1<<"_";

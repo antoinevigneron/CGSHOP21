@@ -12,7 +12,6 @@ int main(int argc, char** argv) {
     }
     cout << "input instance: " << argv[1] << endl;
     fs.input=argv[1];
-    fs.ReadData();
 
     if (argv[2]==string("MAX")) {
     	fs.use_Grid3D2 = false;
@@ -29,6 +28,7 @@ int main(int argc, char** argv) {
     }
 
     fs.Objective = argv[2];
+    fs.ReadData();
 
     struct tm curr_tm;
     time_t curr_time = time(nullptr);
@@ -47,7 +47,6 @@ int main(int argc, char** argv) {
     fs.elapse_t=to_string(s)+" s";
     cout<<"Running time "<< fs.elapse_t <<endl;
     fs.WriteFile();
-    fs.WriteVisual();
-    fs.WriteScore();
+    //fs.WriteVisual();
     return 0;
 }
