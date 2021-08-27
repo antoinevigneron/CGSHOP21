@@ -1,4 +1,4 @@
-This program constructs tries to improve on a given solution of an instance of the CG:SHOP21 contest through local search. It can produce a solution with either a smaller makespan (MAX) or a smaller total number of moves (SUM). 
+This program tries to improve on a given solution of an instance of the CG:SHOP21 contest through local search. It can produce a solution with either a smaller makespan (MAX) or a smaller total number of moves (SUM). 
 
 Installation:
 - You need to install the json cpp library. Command under Ubuntu 20.04:
