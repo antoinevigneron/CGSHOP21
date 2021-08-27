@@ -31,7 +31,7 @@ By default, this program does simulated annealing using the parameters written i
 
 uses the parameters from the file mypar.par. 
 
-Several parameters can modified in this file. The most useful are the number of iterations per cooling cycle, and the number of cooling cycles. Increasing these parameters will make the program run for longer and hopefully produce a better solution. 
+Several parameters can be modified in this file. The most useful are the number of iterations per cooling cycle, and the number of cooling cycles. Increasing these parameters will make the program run for longer and hopefully produce a better solution. 
 
 One can also modify the maximum temperature Tmax. For large instances, a smaller temperature may help: If the temperature is too high, the solution tends to drift away and the score keeps getting worse.
 
