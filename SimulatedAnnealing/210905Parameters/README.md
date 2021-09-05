@@ -1,0 +1,1 @@
+These parameter files were used in the experiments for our journal submission in September 2021. They are chosen to run for about 2 days. Small instances have about 300 robots, medium have about 1500 robots and large instances have about 6000 robots.
