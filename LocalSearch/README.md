@@ -21,3 +21,4 @@ Example:
 "../localsearch small_017_20x20_90_322.instance.json solution.json MAX 600 60"
 tries to improve for 10 minutes solution.json, and prints at most 10 files such as "MAX85.json", "MAX84.json" and "MAX80.json"
 
+If the last two arguments are omitted, they are given the default values 10000000 and 60, so the algorithm runs for a very long time and at most one solution per minute will be produced.
