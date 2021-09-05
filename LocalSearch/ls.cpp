@@ -21,8 +21,7 @@ int Unmove_y(int y, char d){      // ANTOINE: moves (x,y) in direction opposite 
     if (d==4) return y-1;
     return y;
 }
-void LocalSearch::MoveOneRobot(int r){     // ANTOINE: minimizes completion time of robot r
-    //printf("\nrobot #%d: s(%d, %d) --> t(%d, %d) \n", r+1, sx,sy,tx,ty);
+void UNISTCG21_LS::MoveOneRobot(int r){     // ANTOINE: minimizes completion time of robot r
     int sx=start_x[r];
     int sy=start_y[r];
     int tx=target_x[r];
@@ -78,8 +77,8 @@ void LocalSearch::MoveOneRobot(int r){     // ANTOINE: minimizes completion time
         exit(0);
     }
     number_of_moves[r]=0;
+    char d1,d2;
     for(int t=grid_t-1; t>=0; t--){               // write path for robot r in Grid3D
-        char d1,d2;
         d1=Grid3D[t][tx][ty]-10;
         if (t==grid_t-1){
             Grid3D[t][tx][ty]=5;
@@ -108,12 +107,11 @@ void LocalSearch::MoveOneRobot(int r){     // ANTOINE: minimizes completion time
     }
 }
 
-void LocalSearch::MoveOneRobot2(int r){     // ANTOINE: minimizes completion time of robot r
+void UNISTCG21_LS::MoveOneRobot2(int r){     // ANTOINE: minimizes completion time of robot r
 	int sx=start_x[r];
 	int sy=start_y[r];
 	int tx=target_x[r];
 	int ty=target_y[r];
-    //printf("\nrobot #%d: s(%d, %d) --> t(%d, %d) \n", r+1, sx,sy,tx,ty);
 	RemoveRobot(r);
 
     Grid3D[0][sx][sy]=15;                              //10+d means current robot has previous move d
@@ -142,8 +140,6 @@ void LocalSearch::MoveOneRobot2(int r){     // ANTOINE: minimizes completion tim
                     int x2=Move_x(x,d);
                     int y2=Move_y(y,d);
                     char g2=Grid3D[t2][x2][y2];
-                    //if(g2!=0)                                          // next cell not free
-                    //    continue;
                     if(g2<0 or 1<=g2 and g2<=5) //next cell not free
                         continue;
                     else{
@@ -183,8 +179,8 @@ void LocalSearch::MoveOneRobot2(int r){     // ANTOINE: minimizes completion tim
         exit(0);
     }
     number_of_moves[r]=0;
+    char d1,d2;
     for(int t=grid_t-1; t>=0; t--){               // write path for robot r in Grid3D
-        char d1,d2;
         d1=Grid3D[t][tx][ty]-10;
         if (t==grid_t-1){
             Grid3D[t][tx][ty]=5;
@@ -194,9 +190,8 @@ void LocalSearch::MoveOneRobot2(int r){     // ANTOINE: minimizes completion tim
         }
         tx=Unmove_x(tx,d1);
         ty=Unmove_y(ty,d1);
-        if (d1!=5 and d1!=0){ //hyeyun
+        if (d1!=5 and d1!=0)
             number_of_moves[r]++;
-        }
         d2=d1;
     }
     if(sx!=tx || sy != ty){
@@ -215,16 +210,15 @@ void LocalSearch::MoveOneRobot2(int r){     // ANTOINE: minimizes completion tim
     }
 }
 
-int LocalSearch::ComputeCompletionTime(int r){			// Returns the completion time of robot r
+int UNISTCG21_LS::ComputeCompletionTime(int r){			// Returns the completion time of robot r
 	int t=grid_t-1;
 	while(Grid3D[t][target_x[r]][target_y[r]]==5 && t>0)
 		t--;
 	completion_time[r]=t+1;
-	// cout << "robot " << r << " completes at time " << t << endl;
 	return t;
 }
 
-void LocalSearch::RemoveRobot(int r){			// Removes trajectory of robot r from Grid3D
+void UNISTCG21_LS::RemoveRobot(int r){			// Removes trajectory of robot r from Grid3D
    int x=start_x[r];
    int y=start_y[r];
    for(int t=0; t<grid_t; t++){
@@ -240,91 +234,96 @@ void LocalSearch::RemoveRobot(int r){			// Removes trajectory of robot r from Gr
     }
 }
 
-void LocalSearch::CopyBest(){
+void UNISTCG21_LS::CopyBest(){
     Grid3Dbest.clear();
     Grid3Dbest.assign(Grid3D.begin(),Grid3D.end());
     makespan_best= makespan;
     total_moves_best=total_moves;
 }
 
-//void LocalSearch::Optimize(string output, string Objective, int run_time){  	// ANTOINE: greedy algorithm
-void LocalSearch::Optimize(){
+void UNISTCG21_LS::Optimize(){
     cout << "----------------------- Optimize -------------------------" << endl;
     completion_time.resize(num_rb);
-    number_of_moves.resize(num_rb);
 
-    // PrintGrid3D();
     vector<int> permutation(num_rb,0);
     for(int r=0; r< num_rb; r++)
         permutation[r]=r;
 
     Grid3D0=Grid3D;
     clock_t t0=clock();
-    int enlarge=1;
+    clock_t tB=clock();
+    bool first_output=true;
     bool ever_update=false;
-    bool flag=true;
+    bool not_written=false;
+
+    bool improvement = true;
     while(true){
         for (int r=0; r<num_rb; r++)
             ComputeCompletionTime(r);
+        bool flag = true;
         while(flag){
-            flag=false;
-            grid_t=1+(*max_element(completion_time.begin(),completion_time.end()));
-            //total_moves=accumulate(number_of_moves.begin(),number_of_moves.end(),0);
-            //achieved_moves=accumulate(number_of_moves.begin(),number_of_moves.end(),0);
+            flag = false;
             random_shuffle(permutation.begin(),permutation.end());
             for(int i=0; i<num_rb; i++){
                 int r=permutation[i];
-                if(!Objective) MoveOneRobot(r);
-                else MoveOneRobot2(r);
                 int temp=completion_time[r];
-                ComputeCompletionTime(r);
-                if (completion_time[r]<temp)
-                    flag=true;
+                int temp2=number_of_moves[r];
+                if(!Objective)
+                    MoveOneRobot(r);
+                else
+                    MoveOneRobot2(r);
 
+                ComputeCompletionTime(r);
+                if(!Objective and completion_time[r] < temp)
+                    flag = true;
+                else if(Objective and number_of_moves[r] < temp2)
+                    flag = true;
+
+                grid_t=1+(*max_element(completion_time.begin(),completion_time.end()));
+                achieved_moves=accumulate(number_of_moves.begin(),number_of_moves.end(),0);
+
+                if((!Objective and grid_t<makespan) or (Objective and achieved_moves <total_moves)){
+                    makespan=grid_t;
+                    total_moves=achieved_moves;
+                    ever_update=true;
+                    cout << "!updates! " << elapse_t <<" s";
+                    cout << " makespan= " << makespan << " sum= " << total_moves << endl;
+
+                    CopyBest();
+                    if(first_output){
+                        WriteFile();
+                        tB=clock();
+                        first_output=false;
+                    }
+                    else
+                    	not_written=true;   // ANTOINE
+              	}
+              	if(not_written and (float)(clock()-tB)/CLOCKS_PER_SEC > OutputTimeLapse){
+                	WriteFile();
+                    tB=clock();
+                    not_written=false;  // ANTOINE
+                }
                 elapse_t=(float)(clock()-t0)/CLOCKS_PER_SEC;
                 if(elapse_t>=RunningTime){
                     cout <<"!----------------------------------------------------\n";
                     cout<<"Exit by User after Running time "<< RunningTime <<" (sec)\n";
-                    if(ever_update)
-                        WriteFile();
-                    else
-                        cout<<"Nothing updated\n";
+                    if(ever_update) WriteFile();
+                    else cout<<"Nothing updated\n";
                     exit(0);
                 }
-            }
-            achieved_moves=accumulate(number_of_moves.begin(),number_of_moves.end(),0); //hyeyun
-        }
-        if(achieved_moves <= 0){
-            achieved_moves = total_moves;
-        }
-        if((!Objective and grid_t<makespan) or (Objective and achieved_moves <total_moves)){
-            makespan=grid_t;
-            total_moves=achieved_moves;
-            cout << "!updates! " << elapse_t <<" s";
-            cout << " makespan= " << makespan << " sum= " << total_moves << endl;
-            ever_update=true;
-            CopyBest();
-            WriteFile();
-        }
-        if(elapse_t>=RunningTime){
-            cout <<"-----------------------------------------------------\n";
-            cout<<"Exit by User after Running time "<< RunningTime <<" (sec)\n";
-            if(ever_update)
-                WriteFile();
-            else
-                cout<<"Nothing updated\n";
-            exit(0);
-        }
+            } // End of for loop
+        } // End of inner while loop
+        // No improvements, so start from beginning
+        cout <<"------- start from beginning --------" <<  elapse_t <<" s" << " makespan= " << makespan << " sum= " << total_moves << endl;
         grid_t=Grid3D0.size();
-        for(int t=0;t<grid_t;t++)
-            for (int x=0;x< grid_x;x++)
-                for(int y=0;y<grid_y;y++)
-                    Grid3D[t][x][y]=Grid3D0[t][x][y];
-        flag = true;
-    }
+        Grid3D.clear();
+        Grid3D.assign(Grid3D0.begin(),Grid3D0.end());
+        number_of_moves.clear();
+        number_of_moves.assign(number_of_moves0.begin(),number_of_moves0.end());
+    } // End of outer while loop
 }
 
-int LocalSearch::CheckGrid3D(){					// checks whether the data in Grid3D is valid.
+int UNISTCG21_LS::CheckGrid3D(){					// checks whether the data in Grid3D is valid.
 	int count=0;					// returns number of robots.
 	for (int t=0; t<grid_t; t++){	// checks number of robots in each slice
 		int count_temp=0;
@@ -402,8 +401,7 @@ int LocalSearch::CheckGrid3D(){					// checks whether the data in Grid3D is vali
 	return count;
 }
 
-//void LocalSearch::ReadData(string input){
-void LocalSearch::ReadData(){
+void UNISTCG21_LS::ReadData(){
     cout << "----------------------- ReadData -------------------------" << endl;
     short tx = 2;
     short ty = 2;
@@ -419,7 +417,6 @@ void LocalSearch::ReadData(){
 
     Json::Value meta = root["meta"];
     num_rb = meta["number_of_robots"].asInt();
-    shape = meta["description"]["parameters"]["shape"][0].asInt();
 
     clock_t clt = (int)clock();
     start_x.assign(num_rb,0);
@@ -458,8 +455,7 @@ void LocalSearch::ReadData(){
 }
 
 
-//void LocalSearch::WriteFile2(string output, string Objective){                // ANTOINE: write using the 3D Grid
-void LocalSearch::WriteFile(){
+void UNISTCG21_LS::WriteFile(){
     string filename;
     if(!Objective)
         filename = "MAX"+to_string(makespan_best)+".json";
@@ -482,18 +478,14 @@ void LocalSearch::WriteFile(){
         ry[i]=start_y[i];
     }
 
-    Grid3D.clear();
-    Grid3D.assign(Grid3Dbest.begin(),Grid3Dbest.end());
-
     char d;
     int final_move = 0;
     vector<int> final_m(num_rb,0);
-    //for(int t=0;t<grid_t;t++){
     for(int t=0;t<makespan_best;t++){
         solution<<"{";
         int flag=0;
         for(int i=0;i<num_rb;i++){
-            d=Grid3D[t][rx[i]][ry[i]];
+            d=Grid3Dbest[t][rx[i]][ry[i]];
             rx[i]=Move_x(rx[i],d);
             ry[i]=Move_y(ry[i],d);
             if (d==5){
@@ -527,7 +519,6 @@ void LocalSearch::WriteFile(){
                 }
             }
         }
-        //if (t<grid_t-1){
         if (t<makespan_best-1){
             solution<<"},\n";
         }
@@ -547,13 +538,12 @@ void LocalSearch::WriteFile(){
     }
 }
 
-//void LocalSearch::WriteVisual2(string output, string Objective){            // ANTOINE: Write with simultaneous movement
-void LocalSearch::WriteVisual(){
+void UNISTCG21_LS::WriteVisual(){
     string filename;
     if(!Objective)
-        filename = "./visual_main_/main_MAX"+to_string(makespan_best)+".js";
+        filename = "visual_MAX"+to_string(makespan_best)+".js";
     else
-        filename = "./visual_main_/main_SUM"+to_string(total_moves_best)+".js";
+        filename = "visual_SUM"+to_string(total_moves_best)+".js";
 
     ofstream result(filename);
     result << "var start = [\n";
@@ -595,7 +585,6 @@ void LocalSearch::WriteVisual(){
         rx[r]=start_x[r];
         ry[r]=start_y[r];
     }
-    //for(int t=0;t<grid_t;t++)c{
     for(int t=0;t<makespan_best;t++){
         result << "[\n";
         for(int r=0;r<num_rb;r++){
@@ -629,21 +618,17 @@ void LocalSearch::WriteVisual(){
 }
 
 
-//void LocalSearch::ReadSolution(string solution){
-void LocalSearch::ReadSolution(){
+void UNISTCG21_LS::ReadSolution(){
     cout << "----------------------- ReadSolution -------------------------" << endl;
     clock_t s = (int) clock();
     Json::Value root;
     Json::Reader reader;
 
-    //ifstream json("./input_solution_/solution_"+path+".json",ifstream::binary);
     ifstream json(solution,ifstream::binary);
     if (json.fail()){
         cout << "ReadSolution cannot read input file" << endl;
         exit(0);
     }
-    //cout <<"Start to read solution\n";
-    // cout << "input file: " << "./input_solution_/solution_"+path+".json" << endl;
     reader.parse(json, root);
     Json::Value Steps = root["steps"];
 
@@ -687,7 +672,6 @@ void LocalSearch::ReadSolution(){
                 d=5;
             robot_x[r]=Move_x(robot_x[r],d);
             robot_y[r]=Move_y(robot_y[r],d);
-            // cout << "robot " << r << " moves to ("<< robot_x[r] << ", " << robot_y[r] << ")" << endl;
             xmin=min(xmin,robot_x[r]);
             xmax=max(xmax,robot_x[r]);
             ymin=min(ymin,robot_y[r]);
@@ -699,7 +683,6 @@ void LocalSearch::ReadSolution(){
         total_moves+=temp;
     }
     makespan = grid_t-1;
-    cout<<"Initial makespan= "<< makespan << " sum= "<< total_moves <<endl;
     int tx=-xmin+1;            // Translate the grid
     int ty=-ymin+1;
     grid_x=tx+xmax+2;
@@ -714,7 +697,9 @@ void LocalSearch::ReadSolution(){
         target_x[r]+=tx;
         target_y[r]+=ty;
     }
-    cout << "grid_x=" << grid_x << " grid_y = " << grid_y << " tx=" << tx << " ty=" << ty << " grid_t=" << grid_t-1 << " *******************" << endl;
+
+    cout<<"Initial makespan= "<< makespan << " sum= "<< total_moves <<endl;
+    //cout << "grid_x=" << grid_x << " grid_y = " << grid_y << " tx=" << tx << " ty=" << ty << " grid_t=" << grid_t-1 << " *******************" << endl;
     Grid3D.resize(grid_t);           	// Fill the 3D grid
     if(!Objective){
         for(int t=0; t<grid_t; t++){
@@ -733,7 +718,7 @@ void LocalSearch::ReadSolution(){
             }
         }
     }
-    else{ 
+    else{
         Grid3D2.resize(grid_t);
         for(int t=0; t<grid_t; t++){
             Grid3D[t].resize(grid_x);
@@ -749,16 +734,12 @@ void LocalSearch::ReadSolution(){
                 Grid3D[t][x][grid_y-1]=-1;
                 Grid3D2[t][x][0]=-2;
                 Grid3D2[t][x][grid_y-1]=-2;
-                //Grid3D2[t][x][0]=-1;
-                //Grid3D2[t][x][grid_y-1]=-1;
             }
             for(int y=0;y<grid_y;y++){
                 Grid3D[t][0][y]=-1;
                 Grid3D[t][grid_x-1][y]=-1;
                 Grid3D2[t][0][y]=-2;
                 Grid3D2[t][grid_x-1][y]=-2;
-                //Grid3D2[t][0][y]=-1;
-                //Grid3D2[t][grid_x-1][y]=-1;
             }
         }
     }
@@ -768,6 +749,7 @@ void LocalSearch::ReadSolution(){
     robot_y[r]=start_y[r];
     }
     int t=0;
+    number_of_moves.assign(num_rb,0);
     for(auto it = Steps.begin();it !=Steps.end();it++){
         for(int r=0; r<num_rb; r++)
             Grid3D[t][robot_x[r]][robot_y[r]]=5;
@@ -784,20 +766,22 @@ void LocalSearch::ReadSolution(){
                 d=4;
             else
                 d=5;
+            if(d!=5)
+                number_of_moves[r]++;
             Grid3D[t][robot_x[r]][robot_y[r]]=d;
             robot_x[r]=Move_x(robot_x[r],d);
             robot_y[r]=Move_y(robot_y[r],d);
         }
         t++;
     }
+    number_of_moves0.assign(number_of_moves.begin(),number_of_moves.end());
     root.clear();
     Steps.clear();
     Steps.resize(0);
 }
 
 
-//void LocalSearch::WriteScore(string output, string Objective){
-void LocalSearch::WriteScore(){
+void UNISTCG21_LS::WriteScore(){
     struct tm curr_tm;
     time_t curr_time = time(nullptr);
     localtime_r(&curr_time, &curr_tm);
@@ -809,14 +793,14 @@ void LocalSearch::WriteScore(){
     ofstream score(scorefile+".txt", ios::app);
     score <<" "<<curr_tm.tm_mday<<"/"<<curr_tm.tm_mon+1<<"_";
     score <<curr_tm.tm_hour<<":"<<curr_tm.tm_min<<":"<<curr_tm.tm_sec;
-    score << " "<<setprecision(4) << setw(6) << elapse_t <<"s";
-    score <<" " <<grid_x<<" "<< num_rb<<" "<<num_ob;
-    score << " " << total_moves_best;
-    score <<" "<<  makespan_best <<endl;
+    score <<" "<< elapse_t <<" s";
+    score <<" rb: "<< num_rb<<" ob: "<<num_ob;
+    score <<" "<<total_moves_best;
+    score <<" "<< makespan_best <<endl;
     score.close();
 }
 
-void LocalSearch::PrintGrid3D(){
+void UNISTCG21_LS::PrintGrid3D(){
     cout << "-----------------------------------------------------------------------------" << endl;
     cout << "number of slices = " << Grid3D.size() << endl;
     cout << "-----------------------------------------------------------------------------" << endl;

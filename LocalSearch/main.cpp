@@ -2,10 +2,11 @@
 
 int main(int argc, char** argv) {
 
-    LocalSearch ls;
+    UNISTCG21_LS ls;
     srand (time(NULL));
+
     int i=1;
-    if (argc<5 or argc>6){
+    if (argc<4 or argc>6){
 		cout << "Syntax: ls [input_instance.json][input_solution.json][MAX or SUM][Running Time][Time between two output files]" << endl;
 		exit(1);
     }
@@ -29,14 +30,23 @@ int main(int argc, char** argv) {
     ls.solution=argv[2];
     ls.ReadSolution();
 
-    ls.RunningTime = atoi(argv[4]);
-    ls.OutputTimeLapse = atoi(argv[5]);
+	if (argc==4){
+		ls.RunningTime=10000000;
+		ls.OutputTimeLapse=60;
+	} else if (argc==5){
+	    ls.RunningTime = atoi(argv[4]);
+		ls.OutputTimeLapse=60;
+	} else if (argc==6){
+		ls.RunningTime = atoi(argv[4]);
+    	ls.OutputTimeLapse = atoi(argv[5]);
+    }
 
     struct tm curr_tm;
     time_t curr_time = time(nullptr);
     localtime_r(&curr_time, &curr_tm);
-    cout <<" "<<curr_tm.tm_mday<<"/"<<curr_tm.tm_mon+1<<"_";
+    cout <<"\nStarts at "<<curr_tm.tm_mday<<"/"<<curr_tm.tm_mon+1<<"_";
     cout <<curr_tm.tm_hour<<":"<<curr_tm.tm_min<<":"<<curr_tm.tm_sec<<endl;
+    cout <<"Time between two outputs= "<< ls.OutputTimeLapse <<endl;
 
    	ls.Optimize();
     return 0;
