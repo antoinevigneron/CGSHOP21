@@ -40,7 +40,7 @@ struct dist_compare{
     }
 };
 
-class Feasible{
+class UNISTCG21_FS{
     private:
         vector<int> start_x;
         vector<int> start_y;
@@ -51,7 +51,7 @@ class Feasible{
 
         int shape;
         int Layer;
-        vector<pair<short,short>> U;
+        vector<pair<short,short>> MT;
         vector<bool> F;
         int grid_x;
         int grid_y;
@@ -74,21 +74,23 @@ class Feasible{
         int Achieved_sum=0;
         int Achieved_ms=0;
     public:
+
+        UNISTCG21_FS(){};
+        ~UNISTCG21_FS(){};
+
         bool use_Grid3D2;
         bool minimize_makespan;
-        Feasible(){};
-        ~Feasible(){};
 
         string input;
         string output;
-        string Objective;
+        int Objective;
         string starttime;
         string elapse_t;
 
         void ReadData();
-        void UF();
-        void UF2();
-        void FindClosestU();
+        void ComputeMT();
+        void ComputeMT2();
+        void FindClosestMT();
         /* change the search area: grid_x, grid_y */
         void GridInitialize();
         void MoveOrder();
@@ -132,7 +134,4 @@ int Move_x(int x, char d);     // ANTOINE
 int Move_y(int y, char d);
 int Unmove_x(int x,char d);
 int Unmove_y(int y, char d);
-
-
-
 

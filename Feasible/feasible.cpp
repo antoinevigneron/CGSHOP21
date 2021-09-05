@@ -1,6 +1,6 @@
 #include "feasible.h"
 
-void Feasible::GridInitialize(){
+void UNISTCG21_FS::GridInitialize(){
     Dist_Grid.assign(grid_y,vector<pair<short,short>>(grid_x,make_pair(0,0)));
     if(num_ob !=0){
         for(int i=0;i<num_ob;i++){
@@ -22,18 +22,15 @@ void Feasible::GridInitialize(){
         }
         BFSdist(Dist_Grid,target_x[i],target_y[i]);
         AllManhattan[i] = Value(Dist_Grid,start_x[i],gy1-start_y[i]);
-        //cout <<"----------robot #"<<i<<" = "<<"("<< start_x[i]<<", "<< start_y[i]<<")-->"<<AllManhattan[i]<<"\n";
-        //PrintGrid(Dist_Grid);
-        //cout <<endl;
     }
 }
 
-void Feasible::MoveOrder(){
+void UNISTCG21_FS::MoveOrder(){
     /* M = (0, gy1) on plan, =(0,0) on grid*/
-    if(Objective=="MAX")
-        BFSdist(Dist_Grid,grid_x-1,0); /* working_SA2, some instances have better result */
-    else
-        BFSdist(Dist_Grid,0,gy1); /* working_SA, working_SA3*/
+    if(Objective==0) //MAX
+        BFSdist(Dist_Grid,grid_x-1,0);
+    else //SUM
+        BFSdist(Dist_Grid,0,gy1);
     priority_queue<Dist,vector<Dist*>,dist_compare> mv_order;
 
     /* order for S->M*/
@@ -60,7 +57,7 @@ void Feasible::MoveOrder(){
     }
 }
 
-void Feasible::PrintMoveOrder(){
+void UNISTCG21_FS::PrintMoveOrder(){
     cout <<"MoveOrder S-->M:\n";
     int th=1;
     for(int i:move_order){
@@ -70,7 +67,7 @@ void Feasible::PrintMoveOrder(){
     cout <<endl;
 }
 
-void Feasible::PrintMoveOrder1(){
+void UNISTCG21_FS::PrintMoveOrder1(){
     cout <<"MoveOrder M-->T:\n";
     int th=1;
     for(int i:move_order1){
@@ -80,7 +77,7 @@ void Feasible::PrintMoveOrder1(){
     cout <<endl;
 }
 
-void Feasible::BFSdist(vector<vector<pair<short,short>>> &dist_g,int zero_x, int zero_y){
+void UNISTCG21_FS::BFSdist(vector<vector<pair<short,short>>> &dist_g,int zero_x, int zero_y){
     Set(dist_g,zero_x,gy1-zero_y, -2,-2);
     for(int i=0;i<grid_x;i++){
         for(int j=0;j<grid_y;j++){
@@ -176,7 +173,7 @@ int Unmove_y(int y, char d){      // ANTOINE: moves (x,y) in direction opposite 
     return y;
 }
 
-void Feasible::MoveOneRobot(int tmin, int r, int sx, int sy, int tx, int ty){                // ANTOINE: auxiliary function for Simultaneous()
+void UNISTCG21_FS::MoveOneRobot(int tmin, int r, int sx, int sy, int tx, int ty){                // ANTOINE: auxiliary function for Simultaneous()
     //printf("\nrobot #%d: s(%d, %d) --> t(%d, %d) \n", r+1, sx,sy,tx,ty);
 
     Grid3D[tmin][sx][sy]=15;                              //10+d means current robot has previous move d
@@ -246,8 +243,8 @@ void Feasible::MoveOneRobot(int tmin, int r, int sx, int sy, int tx, int ty){   
             t=-2; // will exit outer loop
         }
     }
+    char d1,d2;
     for(int t=Grid3D.size()-1; t>=tmin; t--){               // write path for robot r in Grid3D
-        char d1,d2; //  remove ambiguity?
         d1=Grid3D[t][tx][ty]-10;
         if (t==Grid3D.size()-1){
             Grid3D[t][tx][ty]=5;
@@ -270,7 +267,7 @@ void Feasible::MoveOneRobot(int tmin, int r, int sx, int sy, int tx, int ty){   
     }
 }
 
-void Feasible::MoveOneRobot1(int tmin, int r, int sx, int sy, int tx, int ty){                // ANTOINE: auxiliary function for Simultaneous()
+void UNISTCG21_FS::MoveOneRobot1(int tmin, int r, int sx, int sy, int tx, int ty){                // ANTOINE: auxiliary function for Simultaneous()
     //printf("\nrobot #%d: s(%d, %d) --> t(%d, %d) \n", r+1, sx,sy,tx,ty);
 
     Grid3D[tmin][sx][sy]=15;                              //10+d means current robot has previous move d
@@ -355,13 +352,12 @@ void Feasible::MoveOneRobot1(int tmin, int r, int sx, int sy, int tx, int ty){  
                 }
             }
         }
-        //PrintGrid3D();
         if((t2==Grid3D.size()-1) && (Grid3D[t2][tx][ty]>=10)){
             t=-2; // will exit outer loop
         }
     }
+    char d1,d2;
     for(int t=Grid3D.size()-1; t>=tmin; t--){               // write path for robot r in Grid3D
-        char d1,d2;
         d1=Grid3D[t][tx][ty]-10;
         if (t==Grid3D.size()-1){
             Grid3D[t][tx][ty]=5;
@@ -386,56 +382,68 @@ void Feasible::MoveOneRobot1(int tmin, int r, int sx, int sy, int tx, int ty){  
     Grid3D2[tmin][sx][sy]=-1;
 }
 
-void Feasible::Simultaneous(){  // ANTOINE: smaller makespan through simultaneous movement
+void UNISTCG21_FS::Simultaneous(){  // ANTOINE: smaller makespan through simultaneous movement
     cout << "----------------------- Simultaneous -------------------------" << endl;
     Grid3D.resize(1);           // initializing the first slice of the 3D grid
     Grid3D[0].resize(grid_x);
+
     for(int i=0;i<grid_x;i++)
         Grid3D[0][i].resize(grid_y,0);
     for(int k=0;k<num_ob;k++)
         Grid3D[0][obstacle_x[k]][obstacle_y[k]]=-1;
-    for(int k=0;k<num_rb;k++){
+    for(int k=0;k<num_rb;k++)
         Grid3D[0][start_x[k]][start_y[k]]=5;       // d corresponds to robot with next move d in {1,2,3,4,5}
+
+    if(Objective==0){ //MAX
+        for( int r:move_order)
+            MoveOneRobot(0, r, start_x[r], start_y[r], dg[r]->u, gy1-dg[r]->v);
+        int tmin=Grid3D.size()-1;
+        for( int r:move_order1)
+            MoveOneRobot(tmin, r, dg[r]->u, gy1-dg[r]->v,target_x[r],target_y[r]);
+    }
+    else if(Objective==1){ //SUM
+        Grid3D2.resize(1);
+        Grid3D2[0].resize(grid_x);
+        for(int i=0;i<grid_x;i++)
+            Grid3D2[0][i].resize(grid_y,-1);
+        for( int r:move_order){
+            MoveOneRobot1(0, r, start_x[r], start_y[r], dg[r]->u, gy1-dg[r]->v);
+        }
+        int tmin=Grid3D.size()-1;
+        for( int r:move_order1){
+            MoveOneRobot1(tmin, r, dg[r]->u, gy1-dg[r]->v,target_x[r],target_y[r]);
+        }
     }
 
-    for( int r:move_order)
-        MoveOneRobot(0, r, start_x[r], start_y[r], dg[r]->u, gy1-dg[r]->v);
-    int tmin=Grid3D.size()-1;
-    for( int r:move_order1)
-        MoveOneRobot(tmin, r, dg[r]->u, gy1-dg[r]->v,target_x[r],target_y[r]);
-    //PrintGrid3D();
-    //cout <<"Simultaneous ends\n";
 }
 
-void Feasible::Simultaneous1(){  // ANTOINE: smaller makespan through simultaneous movement
-    cout << "----------------------- Simultaneous -------------------------" << endl;
-    Grid3D.resize(1);          // initializing the first slice of the 3D grid
-    Grid3D[0].resize(grid_x);
-    Grid3D2.resize(1);
-    Grid3D2[0].resize(grid_x);
-    for(int i=0;i<grid_x;i++){
-        Grid3D[0][i].resize(grid_y,0);
-        Grid3D2[0][i].resize(grid_y,-1);
-    }
-    for(int k=0;k<num_ob;k++){
-        Grid3D[0][obstacle_x[k]][obstacle_y[k]]=-1;
-    }
-    for(int k=0;k<num_rb;k++){
-        Grid3D[0][start_x[k]][start_y[k]]=5;       // d corresponds to robot with next move d in {1,2,3,4,5}
-    }
+//void UNISTCG21_FS::Simultaneous1(){  // ANTOINE: smaller makespan through simultaneous movement
+//    cout << "----------------------- Simultaneous for SUM-------------------------" << endl;
+//    Grid3D.resize(1);          // initializing the first slice of the 3D grid
+//    Grid3D[0].resize(grid_x);
+//    Grid3D2.resize(1);
+//    Grid3D2[0].resize(grid_x);
+//    for(int i=0;i<grid_x;i++){
+//        Grid3D[0][i].resize(grid_y,0);
+//        Grid3D2[0][i].resize(grid_y,-1);
+//    }
+//    for(int k=0;k<num_ob;k++){
+//        Grid3D[0][obstacle_x[k]][obstacle_y[k]]=-1;
+//    }
+//    for(int k=0;k<num_rb;k++){
+//        Grid3D[0][start_x[k]][start_y[k]]=5;       // d corresponds to robot with next move d in {1,2,3,4,5}
+//    }
+//
+//    for( int r:move_order){
+//        MoveOneRobot1(0, r, start_x[r], start_y[r], dg[r]->u, gy1-dg[r]->v);
+//    }
+//    int tmin=Grid3D.size()-1;
+//    for( int r:move_order1){
+//        MoveOneRobot1(tmin, r, dg[r]->u, gy1-dg[r]->v,target_x[r],target_y[r]);
+//    }
+//}
 
-    for( int r:move_order){
-        MoveOneRobot1(0, r, start_x[r], start_y[r], dg[r]->u, gy1-dg[r]->v);
-    }
-    int tmin=Grid3D.size()-1;
-    for( int r:move_order1){
-        MoveOneRobot1(tmin, r, dg[r]->u, gy1-dg[r]->v,target_x[r],target_y[r]);
-    }
-    //PrintGrid3D();
-    //cout <<"Simultaneous ends\n";
-}
-
-void Feasible::UF(){
+void UNISTCG21_FS::ComputeMT(){
     /* Compute Layer */
     int temp_rbn=0;
     for(int ly=1;ly>0;ly++){
@@ -445,9 +453,8 @@ void Feasible::UF(){
             break;
         }
     }
-    U.assign(temp_rbn,make_pair(0,0));
+    MT.assign(temp_rbn,make_pair(0,0));
     F.assign(temp_rbn,1);
-    //cout <<"U size = "<< U.size()<<endl;
     /* Compute coordiate of middle target */
     short bottom = -2;
     short top = shape+1;
@@ -458,10 +465,10 @@ void Feasible::UF(){
         prev += length*4;
         length = (shape/2+1)+2*(ly-1);
         for(int i=0;i<length;i++){
-            U.at(uid+prev) = make_pair(bottom, bottom+1+2*i);
-            U.at(uid+length+prev) = make_pair(bottom+1+2*i,top);
-            U.at(uid+2*length+prev) = make_pair(top,top-1-2*i);
-            U.at(uid+3*length+prev) = make_pair(top-1-2*i,bottom);
+            MT.at(uid+prev) = make_pair(bottom, bottom+1+2*i);
+            MT.at(uid+length+prev) = make_pair(bottom+1+2*i,top);
+            MT.at(uid+2*length+prev) = make_pair(top,top-1-2*i);
+            MT.at(uid+3*length+prev) = make_pair(top-1-2*i,bottom);
             uid++;
         }
         uid = 0;
@@ -469,16 +476,15 @@ void Feasible::UF(){
         top +=2;
     }
     int t = Layer*2;
-    for(int i=0;i<U.size();i++){
-        U.at(i).first +=t;
-        U.at(i).second +=t;
+    for(int i=0;i<MT.size();i++){
+        MT.at(i).first +=t;
+        MT.at(i).second +=t;
     }
 }
 
-void Feasible::UF2(){ /* handle instance which grid_x != grid_y*/
+void UNISTCG21_FS::ComputeMT2(){ /* handle instance which grid_x != grid_y*/
     /* Compute Layer */
     int temp_rbn=0;
-    cout <<"grid_x = "<< grid_x<<", grid_y = "<< grid_y<<endl;
     if(grid_x!= grid_y){
         if(grid_y%2==0 and grid_x%2==1){
             short bottom = -2;
@@ -500,9 +506,9 @@ void Feasible::UF2(){ /* handle instance which grid_x != grid_y*/
                     break;
                 }
             }
-            U.assign(temp_rbn,make_pair(0,0));
+            MT.assign(temp_rbn,make_pair(0,0));
             F.assign(temp_rbn,1);
-            cout <<"U size = "<< U.size()<<endl;
+            cout <<"MT size = "<< MT.size()<<endl;
             length_y = (grid_y+2)/2+1;
             length_x = (grid_x+1)/2;
             for(int ly=1;ly<=Layer;ly++){
@@ -512,14 +518,14 @@ void Feasible::UF2(){ /* handle instance which grid_x != grid_y*/
                     length_x +=2;
                 }
                 for(int i=0;i<length_y;i++){
-                    U.at(uid+prev) = make_pair(bottom, bottom+1+2*i);
-                    U.at(uid+length_y+length_x+prev) = make_pair(grid_x-1+2*ly, top-2*i);
+                    MT.at(uid+prev) = make_pair(bottom, bottom+1+2*i);
+                    MT.at(uid+length_y+length_x+prev) = make_pair(grid_x-1+2*ly, top-2*i);
                     uid++;
                 }
                 uid=0;
                 for(int i=0;i<length_x;i++){
-                    U.at(uid+length_y+prev) = make_pair(bottom+2*(i+1), top);
-                    U.at(uid+2*length_y+length_x+prev) = make_pair(grid_x-1+2*ly-2*(i+1),bottom);
+                    MT.at(uid+length_y+prev) = make_pair(bottom+2*(i+1), top);
+                    MT.at(uid+2*length_y+length_x+prev) = make_pair(grid_x-1+2*ly-2*(i+1),bottom);
                     uid++;
                 }
                 uid = 0;
@@ -543,9 +549,9 @@ void Feasible::UF2(){ /* handle instance which grid_x != grid_y*/
                     break;
                 }
             }
-            U.assign(temp_rbn,make_pair(0,0));
+            MT.assign(temp_rbn,make_pair(0,0));
             F.assign(temp_rbn,1);
-            cout <<"U size = "<< U.size()<<endl;
+            cout <<"MT size = "<< MT.size()<<endl;
             length_y = 0;
             length_x = 0;
             for(int ly=1;ly<=Layer;ly++){
@@ -555,14 +561,14 @@ void Feasible::UF2(){ /* handle instance which grid_x != grid_y*/
                 length_y = (grid_y+2*(ly-1)+2)/2;
                 length_x = (grid_x+2*(ly-1)+2)/2;
                 for(int i=0;i<length_y;i++){
-                    U.at(uid+prev) = make_pair(bottom+1, bottom+1+2*i);
-                    U.at(uid+length_y+length_x+prev) = make_pair(grid_x-1+2*ly, top-1-2*i);
+                    MT.at(uid+prev) = make_pair(bottom+1, bottom+1+2*i);
+                    MT.at(uid+length_y+length_x+prev) = make_pair(grid_x-1+2*ly, top-1-2*i);
                     uid++;
                 }
                 uid=0;
                 for(int i=0;i<length_x;i++){
-                    U.at(uid+length_y+prev) = make_pair(bottom+1+2*i, top);
-                    U.at(uid+2*length_y+length_x+prev) = make_pair(grid_x-1+2*ly-1-2*i,bottom);
+                    MT.at(uid+length_y+prev) = make_pair(bottom+1+2*i, top);
+                    MT.at(uid+2*length_y+length_x+prev) = make_pair(grid_x-1+2*ly-1-2*i,bottom);
                     uid++;
                 }
                 uid = 0;
@@ -572,36 +578,35 @@ void Feasible::UF2(){ /* handle instance which grid_x != grid_y*/
         }
     }
     int t = Layer*2;
-    for(int i=0;i<U.size();i++){
-        U.at(i).first +=t;
-        U.at(i).second +=t;
+    for(int i=0;i<MT.size();i++){
+        MT.at(i).first +=t;
+        MT.at(i).second +=t;
     }
 }
 
-void Feasible::FindClosestU(){
+void UNISTCG21_FS::FindClosestMT(){
     /* brute force */
     for(int i:move_order){
         int shortest = -1;
         int sh = -1;
-        for(int s=0;s<U.size();s++){
+        for(int s=0;s<MT.size();s++){
             if(F[s]==1){
-                int len = abs(start_x[i]-U[s].first)+abs(start_y[i]-U[s].second); //SA2
-                if(Objective=="SUM")
-                    len += abs(target_x[i]-U[s].first)+abs(target_y[i]-U[s].second); // len = d(s,m)+d(m,t) //SA3
+                int len = abs(start_x[i]-MT[s].first)+abs(start_y[i]-MT[s].second); //MAX
+                if(Objective==1)//SUM
+                    len += abs(target_x[i]-MT[s].first)+abs(target_y[i]-MT[s].second); // SUM len = d(s,m)+d(m,t)
                 if(len < shortest and F[s]==true or shortest == -1){
                     shortest = len;
                     sh = s;
                 }
             }
         }
-        dg[i]->u = U[sh].first;
-        //dg[i]->v = U[sh].second;
-        dg[i]->v = gy1-U[sh].second;
+        dg[i]->u = MT[sh].first;
+        dg[i]->v = gy1-MT[sh].second;
         F[sh] = false;
     }
 }
 
-void Feasible::ReadData(){
+void UNISTCG21_FS::ReadData(){
     cout << "----------------------- ReadData -------------------------" << endl;
     Json::Value root;
     short tx = 2;
@@ -611,8 +616,6 @@ void Feasible::ReadData(){
     Json::Reader reader;
 
     string path =input;
-    //path = "/home/hyeyun/cgshop2021/twostep/Result/cgshop_2021_instances_01/instances_01/"+input+".instance.json";
-    //path = "./instance_/"+input+".instance.json";
     ifstream json(path,ifstream::binary);
     reader.parse(json, root);
 
@@ -651,9 +654,8 @@ void Feasible::ReadData(){
         count++;
     }
     count=0;
-    for(auto& value:root["obstacles"]){
+    for(auto& value:root["obstacles"])
         count++;
-    }
 
     num_ob = count;
     count=0;
@@ -677,30 +679,26 @@ void Feasible::ReadData(){
             start_x[i] -=min_x;
             target_x[i] -=min_x;
         }
-        if(num_ob!=0){
-            for(int i=0;i<num_ob;i++){
+        if(num_ob!=0)
+            for(int i=0;i<num_ob;i++)
                 obstacle_x[i] -=min_x;
-            }
-        }
     }
     if(min_y!=0){
         for(int i=0;i<num_rb;i++){
             start_y[i] -=min_y;
             target_y[i] -=min_y;
         }
-        if(num_ob!=0){
-            for(int i=0;i<num_ob;i++){
+        if(num_ob!=0)
+            for(int i=0;i<num_ob;i++)
                 obstacle_y[i] -=min_y;
-            }
-        }
     }
 
     grid_x = max_x;
     grid_y = max_y;
 
     if(shape!=0){
-        UF();
-        cout << "Layer = "<< Layer<<", tx = "<< Layer*2 <<", ty = "<< Layer*2 <<endl;
+        ComputeMT();
+        //cout << "Layer = "<< Layer<<", tx = "<< Layer*2 <<", ty = "<< Layer*2 <<endl;
         tx = Layer*2;
         ty = Layer*2;
         for(int i=0;i<num_rb;i++){
@@ -720,9 +718,7 @@ void Feasible::ReadData(){
         grid_x = max_x;
         grid_y = max_y;
 
-        //gx = tx+1; /* Since we count from zero, we need to add 1*/
-        //gy = ty+1;
-        grid_x += tx+1;
+        grid_x += tx+1; // Since we count from zero, we need to add 1
         grid_y += ty+1;
 
         if(grid_x!=grid_y){
@@ -747,8 +743,8 @@ void Feasible::ReadData(){
         }
     }
     if(shape==0){
-        UF2();
-        cout << "Layer = "<< Layer<<", tx = "<< Layer*2 <<", ty = "<< Layer*2 <<endl;
+        ComputeMT2();
+        //cout << "Layer = "<< Layer<<", tx = "<< Layer*2 <<", ty = "<< Layer*2 <<endl;
         tx = Layer*2;
         ty = Layer*2;
         for(int i=0;i<num_rb;i++){
@@ -772,7 +768,6 @@ void Feasible::ReadData(){
     }
     gy1 = grid_y-1;
 
-    cout <<"grid_x = "<< grid_x<<", grid_y = "<< grid_y<<endl;
     printf("\nDATA----------------\n");
     printf("    %d X %d grid\n", grid_x, grid_y);
     printf("    %d robots\n", num_rb);
@@ -781,11 +776,11 @@ void Feasible::ReadData(){
 
     GridInitialize();
     MoveOrder();
-    FindClosestU();
+    FindClosestMT();
 }
 
 
-void Feasible::WriteFile(){                // ANTOINE: write using the 3D Grid
+void UNISTCG21_FS::WriteFile(){                // ANTOINE: write using the 3D Grid
     vector<int> rx(num_rb,0);
     vector<int> ry(num_rb,0);
     for(int i=0; i<num_rb;i++){
@@ -803,30 +798,17 @@ void Feasible::WriteFile(){                // ANTOINE: write using the 3D Grid
             if (d==5){
                 continue;
             }
-            if(d!=0){
-                if(d==1){
-                    Achieved_sum++;
-                }
-                else if(d==2){
-                    Achieved_sum++;
-                }
-                else if(d==3){
-                    Achieved_sum++;
-                }
-                else if(d==4){
-                    Achieved_sum++;
-                }
-            }
+            if(d!=0)
+                Achieved_sum++;
         }
     }
     Achieved_ms = Grid3D.size()-1;
-    //ofstream solution("./output_solution_/solution_"+output+"_"+to_string(Achieved_sum)+"_"+to_string(Achieved_ms)+".json");
-    //ofstream solution(Objective+"_solution_"+output+"_"+to_string(Achieved_sum)+"_"+to_string(Achieved_ms)+".json");
+    cout << "makespan = "<< Achieved_ms <<", total moves = "<< Achieved_sum <<endl;
     string filename;
-    if(Objective=="MAX")
-        filename = Objective+to_string(Achieved_ms)+".json";
-    else if(Objective=="SUM")
-        filename = Objective+to_string(Achieved_sum)+".json";
+    if(Objective==0)
+        filename = "MAX"+to_string(Achieved_ms)+".json";
+    else if(Objective==1)
+        filename = "SUM"+to_string(Achieved_sum)+".json";
 
     ofstream solution(filename);
 
@@ -883,9 +865,9 @@ void Feasible::WriteFile(){                // ANTOINE: write using the 3D Grid
     solution.close();
 }
 
-void Feasible::WriteVisual(){            // ANTOINE: Write with simultaneous movement
+void UNISTCG21_FS::WriteVisual(){            // ANTOINE: Write with simultaneous movement
     string filename;
-    if(Objective=="MAX")
+    if(Objective==0)
         filename = "visual_MAX"+to_string(Achieved_ms);
     else
         filename = "visual_SUM"+to_string(Achieved_sum);
@@ -962,7 +944,7 @@ void Feasible::WriteVisual(){            // ANTOINE: Write with simultaneous mov
 }
 
 
-void Feasible::WriteScore(){
+void UNISTCG21_FS::WriteScore(){
     int SumOfAllManhattan =0;
     int MaxManhattan=0;
     for(int soam:AllManhattan){
@@ -975,26 +957,25 @@ void Feasible::WriteScore(){
     time_t curr_time = time(nullptr);
     localtime_r(&curr_time, &curr_tm);
     ofstream score("score.txt", ios::app);
-    score <<starttime<<endl;
-    score <<" "<< elapse_t<<endl;
+    score <<" starts at: "<<starttime<<endl;
+    score <<" running time: "<< elapse_t<<endl;
     score <<" "<<curr_tm.tm_mday<<"/"<<curr_tm.tm_mon+1<<"_";
     score <<curr_tm.tm_hour<<":"<<curr_tm.tm_min<<":"<<curr_tm.tm_sec;
-    score <<" "<< output <<" "<<grid_x<<" "<< num_rb<<" "<<num_ob;
-    score <<" "<< Achieved_sum;
-    score <<" "<< Achieved_ms;
+    score <<" rb: "<< num_rb<<" ob: "<<num_ob;
+    score <<" sum: "<< Achieved_sum;
+    score <<" max: "<< Achieved_ms;
     score.close();
 }
 
-void Feasible::PrintGrid(vector<vector<pair<short,short>>> &G){
+void UNISTCG21_FS::PrintGrid(vector<vector<pair<short,short>>> &G){
     for(int i=0;i<grid_y;i++){
-        for(int j=0;j<grid_x;j++){
+        for(int j=0;j<grid_x;j++)
             cout <<" "<<setw(2) <<Value(G,j,i);
-        }
-        cout <<endl;
+        cout <<"\n";
     }
 }
 
-void Feasible::PrintGrid3D(){
+void UNISTCG21_FS::PrintGrid3D(){
     cout << "-----------------------------------------------------------------------------" << endl;
     cout << "number of slices = " << Grid3D.size() << endl;
     cout << "-----------------------------------------------------------------------------" << endl;
@@ -1002,22 +983,19 @@ void Feasible::PrintGrid3D(){
         cout << "slice " << t << endl;
         for(int j=grid_y-1;j>=0;j--){
             for(int i=0;i<grid_x;i++){
-                if(int(Grid3D[t][i][j]==0)){
+                if(int(Grid3D[t][i][j]==0))
                    cout <<" "<<setw(2)<<"-";
-                }
-                else if(int(Grid3D[t][i][j]==-1)){
+                else if(int(Grid3D[t][i][j]==-1))
                    cout <<" "<<setw(2)<<"X";
-                }
-                else{
+                else
                    cout <<" "<<setw(2) << int(Grid3D[t][i][j]);
-                }
             }
-            cout <<endl;
+            cout <<"\n";
         }
         cout << "-----------------------------------------------------------------------------" << endl;
     }
 }
-void Feasible::PrintGrid3D2(){
+void UNISTCG21_FS::PrintGrid3D2(){
     cout << "-----------------------------------------------------------------------------" << endl;
     cout << "Grid3D2: number of slices = " << Grid3D2.size() << endl;
     cout << "-----------------------------------------------------------------------------" << endl;
@@ -1025,38 +1003,30 @@ void Feasible::PrintGrid3D2(){
         cout << "slice " << t << endl;
         for(int j=grid_y-1;j>=0;j--){
             for(int i=0;i<grid_x;i++){
-                if(int(Grid3D2[t][i][j]==-1)){
+                if(int(Grid3D2[t][i][j]==-1))
                     cout <<" "<<setw(2)<<"-";
-                }
-                else{
+                else
                     cout <<" "<<setw(2) << int(Grid3D2[t][i][j]);
-                }
             }
-            cout <<endl;
+            cout <<"\n";
         }
         cout << "-----------------------------------------------------------------------------" << endl;
     }
 }
-void Feasible::PrintGridWall(){
-    for(int i=0;i<grid_x;i++){
+void UNISTCG21_FS::PrintGridWall(){
+    for(int i=0;i<grid_x;i++)
         cout<<" "<<setw(2)<<Value(Dist_Grid,i,0);
-    }
-    cout <<endl;
-    cout <<endl;
+    cout<<"\n\n";
     for(int i=0;i<grid_x;i++){
         cout<<" "<<setw(2)<<Value(Dist_Grid,i,grid_y-1);
     }
-    cout <<endl;
-    cout <<endl;
+    cout<<"\n\n";
     for(int i=0;i<grid_y;i++){
         cout<<" "<<setw(2)<<Value(Dist_Grid,0,i);
     }
-    cout <<endl;
-    cout <<endl;
+    cout<<"\n\n";
     for(int i=0;i<grid_y;i++){
         cout<<" "<<setw(2)<<Value(Dist_Grid,grid_x-1,i);
     }
-    cout <<endl;
-    cout <<endl;
-    cout <<endl;
+    cout<<"\n\n\n";
 }

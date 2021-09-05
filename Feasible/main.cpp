@@ -2,7 +2,7 @@
 
 int main(int argc, char** argv) {
 
-    Feasible fs;
+    UNISTCG21_FS fs;
     srand (time(NULL));
 
     int i=1;
@@ -14,20 +14,22 @@ int main(int argc, char** argv) {
     fs.input=argv[1];
 
     if (argv[2]==string("MAX")) {
+        fs.Objective=0;
     	fs.use_Grid3D2 = false;
     	fs.minimize_makespan = true;
     }
     else if(argv[2]==string("SUM")){
+        fs.Objective=1;
     	fs.use_Grid3D2 = true;
 	    fs.minimize_makespan = false;
     }
-
     else{
     	cout << "the 3rd argument should be MAX or SUM" << endl;
     	exit(1);
     }
 
-    fs.Objective = argv[2];
+    cout << "Objective: " << fs.Objective << " " << argv[2] << endl;
+
     fs.ReadData();
 
     struct tm curr_tm;
@@ -38,10 +40,7 @@ int main(int argc, char** argv) {
     fs.starttime = fs.starttime+to_string(curr_tm.tm_hour)+":"+to_string(curr_tm.tm_min)+":"+to_string(curr_tm.tm_sec);
     clock_t s=(int) clock();
 
-    if(fs.minimize_makespan)
-        fs.Simultaneous();
-    else if(fs.use_Grid3D2)
-        fs.Simultaneous1();
+    fs.Simultaneous();
 
     s=(float)(clock()-s)/CLOCKS_PER_SEC;
     fs.elapse_t=to_string(s)+" s";
