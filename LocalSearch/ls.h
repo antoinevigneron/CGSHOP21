@@ -3,27 +3,12 @@
 #include <queue>
 #include <fstream>
 #include <iomanip>
-
-
-//#include <stdio.h>
-//#include <stdlib.h>
-//#include <vector>
 #include <algorithm>
-//#include <cmath>
-//#include <unordered_map>
-//#include <map>
-//#include <set>
-//#include <ctime>
-//#include <functional>
 #include <numeric>
-//#include <sys/types.h>
-//#include <dirent.h>
-//#include <cstring>
-//#include <iterator>
 
 using namespace std;
 
-class LocalSearch{
+class UNISTCG21_LS{
     private:
         vector<int> start_x;
         vector<int> start_y;
@@ -38,8 +23,6 @@ class LocalSearch{
 
         int num_rb;
         int num_ob;
-
-        int shape; // Do we need it?
 
         vector<vector<vector<char>>> Grid3D;
         vector<vector<vector<char>>> Grid3D0;
@@ -56,12 +39,13 @@ class LocalSearch{
 
       	vector<int> completion_time;
       	vector<int> number_of_moves;
+      	vector<int> number_of_moves0;
 
         float elapse_t=0.0;
 
     public:
-        LocalSearch(){};
-        ~LocalSearch(){};
+        UNISTCG21_LS(){};
+        ~UNISTCG21_LS(){};
 
         string input;
         string output;
@@ -85,14 +69,10 @@ class LocalSearch{
         void WriteVisual();
         void WriteScore();
 
-        void PrintGrid3D();            // ANTOINE
+        void PrintGrid3D();
 };
 
-int Move_x(int x, char d);     // ANTOINE
+int Move_x(int x, char d);
 int Move_y(int y, char d);
 int Unmove_x(int x,char d);
 int Unmove_y(int y, char d);
-
-
-
-
