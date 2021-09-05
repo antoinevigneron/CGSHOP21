@@ -1,7 +1,6 @@
-
 #include "sa.h"
 
-void SA::CopyBest(){ 
+void UNISTCG21_SA::CopyBest(){
     Grid3Dbest.clear();
     Grid3Dbest.assign(Grid3D.begin(),Grid3D.end());
     best_makespan=makespan;
@@ -10,7 +9,7 @@ void SA::CopyBest(){
 }
 
 
-void SA::UserParameter(string filename){
+void UNISTCG21_SA::UserParameter(string filename){
     ifstream para(filename, ifstream::binary);
     if (para.fail()){
         cout << "cannot read parameter file" << endl;
@@ -50,7 +49,8 @@ void SA::UserParameter(string filename){
 }
 
 
-void SA::PrintParameters(){
+void UNISTCG21_SA::PrintParameters(){
+    cout << "----------------------- Parameter ------------------------" << endl;
     cout << "| Tmin=" <<  Tmin <<endl;
     cout << "| Tmax=" << Tmax <<endl;
     cout << "| niter=" << niter <<endl;
@@ -68,21 +68,16 @@ void SA::PrintParameters(){
     cout << "| alpha=" << alpha << endl;
     cout << "| random seed=" << random_seed << endl;
     cout << "| write_interval=" << write_interval << endl;
+    cout << "| ___________________________\n";
 }
 
-void SA::Optimize(){
+void UNISTCG21_SA::Optimize(){
 	CopyBest();
 	srand(random_seed);
-    cout << "----------------------- Parameter ------------------------" << endl;
-    PrintParameters();
-    ComputeScores();
     cout << "----------------------- Optimize -------------------------" << endl;
     best_score=ComputeScore();
     best_makespan=makespan;
     best_total_moves=total_moves;
-    cout << "Initial scores:   ";
-    cout << " makespan=" << makespan << " total moves=" << total_moves << endl;
-    cout<<endl;
     double sigma = (double)niter / (20 - log(Tmax - Tmin));
     double Tmax0=Tmax;
     clock_t tpr=clock();
@@ -96,16 +91,16 @@ void SA::Optimize(){
         for (int index = 1; index <= niter; index++) {
             double i = index - 1;
             double T = (Tmax - Tmin) * exp(-i / sigma) + Tmin;
-            // CheckGrid3D(); 
+            // CheckGrid3D();
             RandomMove(T);
             elapse_t=(float)(clock()-t0)/CLOCKS_PER_SEC;
             if (score<best_score){
-                CopyBest();      //hyeyun
+                CopyBest();
                 ever_update=true;
-                cout << " !updates! "<<setprecision(4) << setw(6) << elapse_t << " s"; //hyeyun
-                cout << " makespan:" << best_makespan << " sum: " << best_total_moves;
-                cout << " #iter: "<<setw(6)<<std::left << index << " #cycle: " << cycle;
-                cout << " score: " << setprecision(7) << ComputeScore();
+                cout << "!updates! "<< elapse_t << " s";
+                cout << " makespan: " << best_makespan << " sum: " << best_total_moves;
+                cout << " #iter: "<< index << " #cycle: " << cycle;
+                cout << " score: "<< ComputeScore();
                 if (Objective==0 and grid_t>1+int(grid_t_coef*double(best_makespan))){
                     grid_t=1+int(grid_t_coef*double(makespan));
                     cout << " resized grid_t to " << grid_t << endl;
@@ -113,26 +108,25 @@ void SA::Optimize(){
                 else cout<<endl;
             }
             if (ever_update and ((double)(clock()-tpr)/CLOCKS_PER_SEC>write_interval)){
-            	WriteFile2();
+            	WriteFile();
             	tpr=clock();
             	ever_update=false;
             }
-            
      	}
-        cout << setprecision(4) << setw(6) << (float)(clock()-t0)/CLOCKS_PER_SEC << "s ";
-        cout << "cycle " << cycle << " Tmin=" << Tmin << " Tmax=" << Tmax;
+        cout << (float)(clock()-t0)/CLOCKS_PER_SEC << " s ";
+        cout << "Cycle " << cycle << " Tmin=" << Tmin << " Tmax=" << Tmax;
         cout << " #rejected=" << number_rejected << " #accepted=" << number_accepted;
         cout << " makespan=(" << makespan << "/"  << best_makespan<<")"<< " sum=(" <<total_moves<<"/"<<best_total_moves<<")";
         cout << " score= " << score << endl;
         Tmax -= (Tmax0 - Tmin) / (double)ncycles;
     }
     if(ever_update){
-        WriteFile2();
-        //WriteVisual2();
+        WriteFile();
+        //WriteVisual();
     }
 }
 
-double SA::ComputeScore(){
+double UNISTCG21_SA::ComputeScore(){
     if (Objective==1){
         return score=double(total_moves)/double(num_rb);
     }
@@ -150,7 +144,7 @@ double SA::ComputeScore(){
     return score;
 }
 
-void SA::RandomMove(double T){
+void UNISTCG21_SA::RandomMove(double T){
     static bool firsttime=true;
     static double r1;
     if(firsttime==true){
@@ -211,7 +205,7 @@ int Unmove_y(int y, char d){      // ANTOINE: moves (x,y) in direction opposite 
     return y;
 }
 
-void SA::Position(int r, int t, int &x, int &y){  // returns the position (x,y) of robot r at time t
+void UNISTCG21_SA::Position(int r, int t, int &x, int &y){  // returns the position (x,y) of robot r at time t
     if(r >= num_rb){
         cout <<"-----------------\n";
         cout <<"r = "<< r <<", num_rb = "<< num_rb <<endl;
@@ -249,7 +243,7 @@ void SA::Position(int r, int t, int &x, int &y){  // returns the position (x,y) 
     }
 }
 
-void SA::RandomBounds(int &tmin, int &tmax){
+void UNISTCG21_SA::RandomBounds(int &tmin, int &tmax){
     int k=grid_t;
     double x = ((double)rand()+1) / ((double)RAND_MAX + 1);
     k=(int)(alpha*sqrt(1/x));
@@ -261,7 +255,7 @@ void SA::RandomBounds(int &tmin, int &tmax){
 
 
 
-void SA::FillGrid3D(int r, int tmin, int tmax,int sx, int sy){ // Fills grid3D with values 11,...,15
+void UNISTCG21_SA::FillGrid3D(int r, int tmin, int tmax,int sx, int sy){ // Fills grid3D with values 11,...,15
     //cout <<" FG3D,";
     Grid3D[tmin][sx][sy]=15;
     wxmin[tmin]=sx;	// Coordinates of the current window when traversing the grid
@@ -316,7 +310,7 @@ void SA::FillGrid3D(int r, int tmin, int tmax,int sx, int sy){ // Fills grid3D w
         t=t2;
     }
 }
-void SA::FillGrid3D_back(int r, int tmax, int tm,int sx, int sy){ // Fills grid3D backwards from tmax to tmin
+void UNISTCG21_SA::FillGrid3D_back(int r, int tmax, int tm,int sx, int sy){ // Fills grid3D backwards from tmax to tmin
     //cout <<" FG3D_b";
     Grid3D[tmax][sx][sy]=15;
     wxmin[tmax]=sx;	// Coordinates of the current window when traversing the grid
@@ -371,7 +365,7 @@ void SA::FillGrid3D_back(int r, int tmax, int tm,int sx, int sy){ // Fills grid3
         t=t2;
     }
 }
-void SA::FillGrid3D2(int r, int tmin, int tmax,int sx, int sy){ // Fills grid3D with values 11,...,15
+void UNISTCG21_SA::FillGrid3D2(int r, int tmin, int tmax,int sx, int sy){ // Fills grid3D with values 11,...,15
     Grid3D[tmin][sx][sy]=15;
     Grid3D2[tmin][sx][sy]=0;
 
@@ -443,7 +437,7 @@ void SA::FillGrid3D2(int r, int tmin, int tmax,int sx, int sy){ // Fills grid3D 
         t=t2;
     }
 }
-void SA::FillGrid3D_back2(int r, int tmax, int tm,int sx, int sy){ // Fills grid3D backwards from tmax to tmin
+void UNISTCG21_SA::FillGrid3D_back2(int r, int tmax, int tm,int sx, int sy){ // Fills grid3D backwards from tmax to tmin
     Grid3D[tmax][sx][sy]=15;
     Grid3D2[tmax][sx][sy]=0;
     wxmin[tmax]=sx;	// Coordinates of the current window when traversing the grid
@@ -515,7 +509,7 @@ void SA::FillGrid3D_back2(int r, int tmax, int tm,int sx, int sy){ // Fills grid
     }
 }
 
-void SA::Stretch(int r, int tmin, int tmax){
+void UNISTCG21_SA::Stretch(int r, int tmin, int tmax){
     //cout <<" Stch : ";
     int sx,tx,sy,ty,dt;
     int number_of_moves0=number_of_moves[r];
@@ -682,7 +676,7 @@ void SA::Stretch(int r, int tmin, int tmax){
     //cout <<" ---\n";
 }
 
-void SA::Tighten(int r, int tmin, int tmax){
+void UNISTCG21_SA::Tighten(int r, int tmin, int tmax){
     //cout <<" Tt : ";
     int sx,tx,sy,ty,dt;
     int number_of_moves0=number_of_moves[r];
@@ -766,14 +760,14 @@ void SA::Tighten(int r, int tmin, int tmax){
     //cout <<" ---\n";
 }
 
-int SA::ComputeCompletionTime(int r){			// Returns the completion time of robot r
+int UNISTCG21_SA::ComputeCompletionTime(int r){			// Returns the completion time of robot r
     int t=grid_t-1;
     while(Grid3D[t][target_x[r]][target_y[r]]==5 && t>0)
         t--;
     completion_time[r]=t+1;
     return t;
 }
-void SA::UnRemoveRobot(int r, int tmin, int tmax){
+void UNISTCG21_SA::UnRemoveRobot(int r, int tmin, int tmax){
     //cout <<" UnRemoveR\n";
     int x=prev_traj_x;
     int y=prev_traj_y;
@@ -805,7 +799,7 @@ void SA::UnRemoveRobot(int r, int tmin, int tmax){
         y=Move_y(y,d);
     }
 }
-void SA::RemoveRobot(int r, int tmin, int tmax, int x, int y){			// Removes trajectory of robot r from Grid3D
+void UNISTCG21_SA::RemoveRobot(int r, int tmin, int tmax, int x, int y){			// Removes trajectory of robot r from Grid3D
     //cout <<" RR,";
     prev_traj_x=x; prev_traj_y=y;	// For UnRemoveRobot
     char d; //hyeyun: remove ambiguity
@@ -827,7 +821,7 @@ void SA::RemoveRobot(int r, int tmin, int tmax, int x, int y){			// Removes traj
     }
 }
 
-void SA::ComputeScores(){
+void UNISTCG21_SA::ComputeScores(){
     total_moves=0;
     makespan=0;
     completion_time.resize(num_rb);
@@ -886,7 +880,7 @@ void SA::ComputeScores(){
     }
 }
 
-int SA::CheckGrid3D(){					// checks whether the data in Grid3D is valid.
+int UNISTCG21_SA::CheckGrid3D(){					// checks whether the data in Grid3D is valid.
     int count=0;					// returns number of robots.
     for (int t=0; t<grid_t; t++){	// checks number of robots in each slice
         int count_temp=0;
@@ -964,7 +958,7 @@ int SA::CheckGrid3D(){					// checks whether the data in Grid3D is valid.
     return count;
 }
 
-void SA::ReadData(){
+void UNISTCG21_SA::ReadData(){
     cout << "----------------------- ReadData -------------------------" << endl;
     Json::Value root;
     short tx = 2;
@@ -1019,7 +1013,7 @@ void SA::ReadData(){
     printf("reading data takes %0.4f seconds\n",(float)(clock()-clt)/CLOCKS_PER_SEC);
 }
 
-void SA::WriteFile2(){
+void UNISTCG21_SA::WriteFile(){
     string filename;
     if(Objective==1){
         filename="SUM"+to_string(best_total_moves)+".json";
@@ -1082,11 +1076,11 @@ void SA::WriteFile2(){
         }
     }
     solution<<"]\n";
-    solution<<"}\n";     	
+    solution<<"}\n";
     solution.close();
 }
 
-void SA::WriteVisual2(){
+void UNISTCG21_SA::WriteVisual(){
     string filename;
     if(Objective==1){
         filename="./visual_main_/main_MIN_"+output+"_"+to_string(best_total_moves)+".js";
@@ -1168,13 +1162,13 @@ void SA::WriteVisual2(){
 }
 
 
-void SA::ReadSolution(){
+void UNISTCG21_SA::ReadSolution(){
+    cout << "----------------------- ReadSolution -------------------------" << endl;
     clock_t s = (int) clock();
     Json::Value root;
     Json::Reader reader;
 
-    //ifstream json("../input_solution_/"+solution+".json",ifstream::binary); //hyeyun
-    ifstream json(solution,ifstream::binary); //hyeyun
+    ifstream json(solution,ifstream::binary);
     if (json.fail()){
         cout << "ReadSolution cannot read input file" << endl;
         cout << solution <<endl;
@@ -1324,40 +1318,42 @@ void SA::ReadSolution(){
             }
     }
     prev_traj.resize(grid_t);
-    cout << "grid_x=" << grid_x << " grid_y= " << grid_y << " tx=" << tx << " ty=" << ty << " grid_t=" << grid_t << " *******************" << endl;
+    //cout << "grid_x=" << grid_x << " grid_y= " << grid_y << " tx=" << tx << " ty=" << ty << " grid_t=" << grid_t << " *******************" << endl;
     root.clear();
     Steps.clear();
     Steps.resize(0);
+
+    ComputeScores();
+    cout << "Initial makespan= " << makespan << " total moves= " << total_moves << endl;
 }
 
-void SA::WriteScore(){
+void UNISTCG21_SA::WriteScore(){
     struct tm curr_tm;
     time_t curr_time = time(nullptr);
     localtime_r(&curr_time, &curr_tm);
-    ofstream score("./score_/score_"+output+".txt", ios::app);
+    ofstream score("score.txt", ios::app);
     score <<" " <<curr_tm.tm_mday<<"/"<<curr_tm.tm_mon+1<<"_";
     score << curr_tm.tm_hour<<":"<<curr_tm.tm_min<<":"<<curr_tm.tm_sec;
     score << setprecision(4) << setw(6) << elapse_t << " s";
-    score << " " << output <<" "<<grid_x<<" "<< num_rb<<" "<<num_ob;
+    score << " rb: "<< num_rb<<" ob: "<<num_ob;
     score << " " << best_total_moves;
     score << " " << best_makespan<<endl;
     score.close();
 }
 
-void SA::CleanGrid(){
+void UNISTCG21_SA::CleanGrid(){
     for(int x=0;x<grid_x;x++)
         for(int y=0;y<grid_y;y++)
             if (grid[x][y]!=-1)
                 grid[x][y]=0;
 }
 
-void SA::PrintTrajectory(int r){
+void UNISTCG21_SA::PrintTrajectory(int r){
     int x=start_x[r];
     int y=start_y[r];
     for(int t=0; t<grid_t; t++){
         char d=Grid3D[t][x][y];
         grid[x][y]=t+1;
-        //d=Grid3D[t][x][y];
         if(Grid3D[t][x][y]<1 || Grid3D[t][x][y]>5){
             cout << "***** ERROR PrintTrajectory" << endl;
             cout << "r=" << r << " t=" << t << " x=" << x << " y=" << y << " d=" << int(d) << endl;
@@ -1384,7 +1380,7 @@ void SA::PrintTrajectory(int r){
     cout << "-----------------------------------------------------------------------------" << endl;
     CleanGrid();
 }
-void SA::PrintGrid3D(){
+void UNISTCG21_SA::PrintGrid3D(){
     cout << "-----------------------------------------------------------------------------" << endl;
     cout << "number of slices = " << Grid3D.size() << endl;
     cout << "-----------------------------------------------------------------------------" << endl;
@@ -1407,7 +1403,7 @@ void SA::PrintGrid3D(){
         cout << "-----------------------------------------------------------------------------" << endl;
     }
 }
-void SA::PrintInterface(){
+void UNISTCG21_SA::PrintInterface(){
     cout << "-----------------------------------------------------------------------------" << endl;
     cout << "Interface" << endl;
     cout << "-----------------------------------------------------------------------------" << endl;
