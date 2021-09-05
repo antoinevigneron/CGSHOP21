@@ -12,7 +12,7 @@
 
 using namespace std;
 
-class SA{
+class UNISTCG21_SA{
     private:
         //  INPUT PARAMETERS
         double Tmin;
@@ -27,10 +27,9 @@ class SA{
         double write_interval;
         // END OF INPUT PARAMETERS
 
-	   
 	   // number of moves that increased the score and
 	   // were accepted in this cycle
-        int number_rejected=0;  
+        int number_rejected=0;
         int number_accepted=0;
 
 
@@ -71,21 +70,22 @@ class SA{
         float elapse_t=0.0;    // elapsed time
 
 	public:
-        SA(){};
-        ~SA(){};
+        UNISTCG21_SA(){};
+        ~UNISTCG21_SA(){};
 
 	    double alpha=5;     // parameter for the stretch operation size
 
         string input;    // input instance file name
         string output;   // output file name, no longer used
-        string solution;  // input solution file name  
+        string solution;  // input solution file name
         int Objective;  // 0 for MAX, 1 for SUM
 
         void Optimize();  // main procedure that does simulated annealing
         void CopyBest();  // saves a copy of the best solution so far
         void UserParameter(string);   // loads the parameter file
-        void PrintParameters();   
+        void PrintParameters();
         void ReadData();    // reads the instance file
+        void ReadSolution();  // reads the input solution file
         void RemoveRobot(int,int,int,int,int);   // Removes a robot from the grid
         void UnRemoveRobot(int,int,int);    // Reinserts the robot
         int ComputeCompletionTime(int);     // Computes all the completion times
@@ -93,22 +93,21 @@ class SA{
         void ComputeScores(void);	// computes all the scores
         void RandomBounds(int &, int &);    // computes tmin and tmax for stretching
         double ComputeScore();       // computes the current value of the objective function
-  
+
         void Tighten(int, int ,int);    // tightening operation
         void Stretch(int, int ,int);    // stretching operation
         void Position(int, int, int &, int &);  // position of a robot at a given time
         void FillGrid3D(int, int, int,int,int);   // main procedure for inserting a robot into the grid
-        void FillGrid3D_back(int, int, int,int,int);  // same but backward 
+        void FillGrid3D_back(int, int, int,int,int);  // same but backward
         void FillGrid3D2(int, int, int,int,int);   //  inserts a robot while minimizing its number of moves
-        void FillGrid3D_back2(int, int, int,int,int);  
+        void FillGrid3D_back2(int, int, int,int,int);
         void PrintTrajectory(int);    //  for debugging, prints the trajectory of a robot
         void CleanGrid();
         void RandomMove(double);  // generates a random move for the simulated annealing
 
+        void WriteFile();   // writes the output solution file
+        void WriteVisual();  // not currently used; for displaying the solution
         void WriteScore();
-        void WriteFile2();   // writes the output solution file
-        void WriteVisual2();  // not currently used; for displaying the solution 
-        void ReadSolution();  // reads the input solution file
 
         void PrintGrid3D();      // for debugging
         void PrintInterface();   // for debugging
